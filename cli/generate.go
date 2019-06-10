@@ -39,7 +39,7 @@ func (scaffold *scaffold) Scaffold() {
 			}
 		}
 	} else {
-		fileName = scaffold.Topic + ".avrc"
+		fileName = scaffold.Topic + ".avsc"
 		downloadSchema(scaffold, scaffold.Topic+"-value", fileName)
 	}
 }
