@@ -13,8 +13,42 @@ func Route() {
 			Help()
 
 		case "task":
-			log.Println("task")
+			f := flag.NewFlagSet("generate", flag.ExitOnError)
+			var host string
+			var name string
+			var mode string
+			var target string
 
+			if len(os.Args) > 2 {
+				f.StringVar(&host, "host", "", "connector host with port")
+				f.StringVar(&name, "name", "", "connector name")
+				f.StringVar(&mode, "type", "source", "connector type")
+				f.StringVar(&target, "target", "task", "which task needs to operat (task|connector)")
+
+				f.Parse(os.Args[3:])
+				if len(host) == 0 {
+					log.Fatalln("no connector api host specified")
+				}
+				t := task{
+					host:     host,
+					name:     name,
+					taskType: mode,
+					target:   target,
+				}
+
+				switch os.Args[2] {
+				case "ls", "list":
+					t.listTask()
+
+				case "start", "restart":
+					t.restart()
+
+				default:
+					log.Fatalln("unrecognized input")
+				}
+			} else {
+				log.Fatalln("please input subcommand to task")
+			}
 		case "generate":
 		case "g":
 			{

@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -64,7 +65,9 @@ func downloadSchema(scaffold *scaffold, name string, fileName string) {
 		log.Fatalln(err)
 	}
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	dst := &bytes.Buffer{}
+	json.Indent(dst, bodyBytes, "", "  ")
 	_ = os.Mkdir(scaffold.Path, 0644)
 	fullName := path.Join(scaffold.Path, fileName)
-	_ = ioutil.WriteFile(fullName, bodyBytes, 0644)
+	_ = ioutil.WriteFile(fullName, dst.Bytes(), 0644)
 }
