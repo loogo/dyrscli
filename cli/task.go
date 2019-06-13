@@ -86,9 +86,8 @@ func (tsk *task) listTask() {
 	for _, value := range taskList {
 		fmt.Fprintf(w, "%s\t%s\t%d\t%s\t%s\n", value.connector, value.connectorStatus, value.id, value.status, value.tskType)
 		count++
-		if count%20 == 0 {
+		if count%100 == 0 {
 			w.Flush()
-
 			fmt.Scanln() // wait for Enter Key
 		}
 	}

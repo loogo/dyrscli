@@ -34,7 +34,7 @@ func (scaffold *scaffold) Scaffold() {
 
 		for _, sub := range subjects {
 			if strings.HasSuffix(sub, "-value") {
-				fileName = strings.TrimSuffix(sub, "-value") + ".avrc"
+				fileName = strings.TrimSuffix(sub, "-value") + ".avsc"
 				downloadSchema(scaffold, sub, fileName)
 			}
 		}
