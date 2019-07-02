@@ -39,7 +39,7 @@ type taskStatus struct {
 	tskType         string
 }
 
-func (tsk *task) listTask() {
+func (tsk *task) getNotRunningTasks() []taskStatus {
 	baseURL := fmt.Sprintf("http://%s/connectors/", tsk.host)
 	var taskList []taskStatus
 	var result []string
@@ -79,6 +79,11 @@ func (tsk *task) listTask() {
 			})
 		}
 	}
+
+	return taskList
+}
+func (tsk *task) listTask() {
+	taskList := tsk.getNotRunningTasks()
 	w := new(tabwriter.Writer)
 	w.Init(os.Stdout, 0, 8, 0, '\t', 0)
 	fmt.Fprintln(w, "Connector\tConnectorStatus\tTaskID\tTaskStatus\tType")

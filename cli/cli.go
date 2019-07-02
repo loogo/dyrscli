@@ -23,7 +23,7 @@ func Route() {
 				f.StringVar(&host, "host", "", "connector host with port")
 				f.StringVar(&name, "name", "", "connector name")
 				f.StringVar(&mode, "type", "source", "connector type")
-				f.StringVar(&target, "target", "task", "which task needs to operat (task|connector)")
+				f.StringVar(&target, "target", "task", "which task needs to operat (task|connector|all)")
 
 				f.Parse(os.Args[3:])
 				if len(host) == 0 {
@@ -41,7 +41,24 @@ func Route() {
 					t.listTask()
 
 				case "start", "restart":
-					t.restart()
+					if target == "all" {
+						taskList := t.getNotRunningTasks()
+						for _, value := range taskList {
+							target := "task"
+							if value.connectorStatus != "RUNNING" {
+								target = "connector"
+							}
+							tt := task{
+								host:     host,
+								name:     value.connector,
+								taskType: mode,
+								target:   target,
+							}
+							tt.restart()
+						}
+					} else {
+						t.restart()
+					}
 
 				default:
 					log.Fatalln("unrecognized input")
