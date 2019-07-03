@@ -44,6 +44,9 @@ func Route() {
 					if target == "all" {
 						taskList := t.getNotRunningTasks()
 						for _, value := range taskList {
+							if value.status == "RUNNING" && value.connectorStatus == "RUNNING" {
+								continue
+							}
 							target := "task"
 							if value.connectorStatus != "RUNNING" {
 								target = "connector"
