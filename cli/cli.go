@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"time"
 )
 
 func Route() {
@@ -18,12 +19,14 @@ func Route() {
 			var name string
 			var mode string
 			var target string
+			var duration int
 
 			if len(os.Args) > 2 {
-				f.StringVar(&host, "host", "", "connector host with port")
+				f.StringVar(&host, "host", "127.0.0.1:8083", "connector host with port")
 				f.StringVar(&name, "name", "", "connector name")
 				f.StringVar(&mode, "type", "source", "connector type")
 				f.StringVar(&target, "target", "task", "which task needs to operat (task|connector|all)")
+				f.IntVar(&duration, "dur", 60, "how long time is the duration, seconds")
 
 				f.Parse(os.Args[3:])
 				if len(host) == 0 {
@@ -42,22 +45,27 @@ func Route() {
 
 				case "start", "restart":
 					if target == "all" {
-						taskList := t.getNotRunningTasks()
-						for _, value := range taskList {
-							if value.status == "RUNNING" && value.connectorStatus == "RUNNING" {
-								continue
+						for {
+							taskList := t.getNotRunningTasks()
+							for _, value := range taskList {
+								if value.status == "RUNNING" && value.connectorStatus == "RUNNING" {
+									continue
+								}
+								target := "task"
+								if value.connectorStatus != "RUNNING" {
+									target = "connector"
+								}
+								log.Printf("Connector: %s`s  status is invalid", value.connector)
+								tt := task{
+									host:     host,
+									name:     value.connector,
+									taskType: mode,
+									target:   target,
+								}
+								tt.restart()
 							}
-							target := "task"
-							if value.connectorStatus != "RUNNING" {
-								target = "connector"
-							}
-							tt := task{
-								host:     host,
-								name:     value.connector,
-								taskType: mode,
-								target:   target,
-							}
-							tt.restart()
+							log.Println("connector status heart rate...")
+							time.Sleep(time.Second * time.Duration(duration))
 						}
 					} else {
 						t.restart()
