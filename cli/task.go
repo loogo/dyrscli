@@ -27,6 +27,7 @@ type connectorStatus struct {
 		State    string
 		ID       int
 		WorkerID string `json:"worker_id"`
+		Trace    string
 	}
 	Type string
 }
@@ -37,6 +38,7 @@ type taskStatus struct {
 	connector       string
 	connectorStatus string
 	tskType         string
+	trace           string
 }
 
 func (tsk *task) getNotRunningTasks() []taskStatus {
@@ -76,6 +78,7 @@ func (tsk *task) getNotRunningTasks() []taskStatus {
 				id:              tskstatus.ID,
 				status:          tskstatus.State,
 				tskType:         connectorstatus.Type,
+				trace:           tskstatus.Trace,
 			})
 		}
 	}

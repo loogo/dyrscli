@@ -1,13 +1,38 @@
 package cli
 
 import (
+	"bufio"
+	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"os"
+	"os/exec"
+	"strings"
 	"time"
 )
 
+var topicMap = map[string]string{}
+
+// kafkacat -b localhost:29092 -C -t my_connect_offsets -f '%p %k\n' > /opt/dev/report/offse
+
 func Route() {
+	// load source partition
+	file, err := os.Open("offset")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		txts := strings.Split(line, " ")
+		var vals []string
+		json.Unmarshal([]byte(txts[1]), &vals)
+		topicMap[vals[0]] = txts[0]
+	}
+	b, _ := json.MarshalIndent(topicMap, "", "  ")
+	fmt.Println(string(b))
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "help":
@@ -56,6 +81,17 @@ func Route() {
 									target = "connector"
 								}
 								log.Printf("Connector: %s`s  status is invalid", value.connector)
+								log.Println(value.trace)
+								if sourcePartition, ok := topicMap[value.connector]; ok {
+									execScript := "echo '[\"" + value.connector + "\",{\"server\":\"saas\"}]|' | kafkacat -P -Z -b localhost:29092 -t my_connect_offsets -K \\| -p " + sourcePartition
+									// fmt.Println(execScript)
+									stdout, err := exec.Command("bash", "-c", execScript).Output()
+									if err != nil {
+										log.Fatal(err)
+									}
+									fmt.Println(string(stdout))
+								}
+
 								tt := task{
 									host:     host,
 									name:     value.connector,
