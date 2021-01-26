@@ -30,6 +30,7 @@ func Route() {
 		var vals []string
 		json.Unmarshal([]byte(txts[1]), &vals)
 		topicMap[vals[0]] = txts[0]
+		topicMap[vals[0]+"_server"] = getStringInBetween(txts[1], ",", "]")
 	}
 	b, _ := json.MarshalIndent(topicMap, "", "  ")
 	fmt.Println(string(b))
@@ -82,14 +83,28 @@ func Route() {
 								}
 								log.Printf("Connector: %s`s  status is invalid", value.connector)
 								log.Println(value.trace)
-								if sourcePartition, ok := topicMap[value.connector]; ok {
-									execScript := "echo '[\"" + value.connector + "\",{\"server\":\"saas\"}]|' | kafkacat -P -Z -b localhost:29092 -t my_connect_offsets -K \\| -p " + sourcePartition
-									// fmt.Println(execScript)
-									stdout, err := exec.Command("bash", "-c", execScript).Output()
-									if err != nil {
-										log.Fatal(err)
+								//Caused by: org.apache.kafka.connect.errors.DataException: Failed to serialize Avro data from topic qtesvc_sdv_product_small_fee_cfg_org_rel :
+								errTopic, found := getStringInBetweenTwoString(value.trace, "Failed to serialize Avro data from topic ", " :")
+								if found && errTopic != "" {
+									keyScript := fmt.Sprintf("curl -X DELETE http://localhost:8081/subjects/%s-key", errTopic)
+									fmt.Println(keyScript)
+
+									valueScript := fmt.Sprintf("curl -X DELETE http://localhost:8081/subjects/%s-value", errTopic)
+									fmt.Println(valueScript)
+
+									exec.Command("bash", "-c", keyScript).Run()
+									exec.Command("bash", "-c", valueScript).Run()
+								}
+								if strings.Contains(value.trace, "Could not find first log file name in binary log index file") {
+									if sourcePartition, ok := topicMap[value.connector]; ok {
+										execScript := "echo '[\"" + value.connector + "\"," + topicMap[value.connector+"_server"] + "]|' | kafkacat -P -Z -b localhost:29092 -t my_connect_offsets -K \\| -p " + sourcePartition
+										fmt.Println(execScript)
+										stdout, err := exec.Command("bash", "-c", execScript).Output()
+										if err != nil {
+											log.Fatal(err)
+										}
+										fmt.Println(string(stdout))
 									}
-									fmt.Println(string(stdout))
 								}
 
 								tt := task{
@@ -145,4 +160,20 @@ func Route() {
 			}
 		}
 	}
+}
+func getStringInBetweenTwoString(str string, startS string, endS string) (result string, found bool) {
+	return getStringInBetween(str, startS, endS), true
+}
+func getStringInBetween(str string, startS string, endS string) (result string) {
+	s := strings.Index(str, startS)
+	if s == -1 {
+		return result
+	}
+	newS := str[s+len(startS):]
+	e := strings.Index(newS, endS)
+	if e == -1 {
+		return result
+	}
+	result = newS[:e]
+	return result
 }
