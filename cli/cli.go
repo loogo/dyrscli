@@ -26,6 +26,7 @@ func Route() {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
+		fmt.Println(line)
 		txts := strings.Split(line, " ")
 		var vals []string
 		json.Unmarshal([]byte(txts[1]), &vals)
@@ -101,7 +102,7 @@ func Route() {
 										fmt.Println(execScript)
 										stdout, err := exec.Command("bash", "-c", execScript).Output()
 										if err != nil {
-											log.Fatal(err)
+											log.Println(err)
 										}
 										fmt.Println(string(stdout))
 									}
