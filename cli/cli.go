@@ -18,10 +18,12 @@ var topicMap = map[string]string{}
 
 func Route() {
 	// load source partition
-	file, err := os.Open("offset")
-	if err != nil {
-		log.Fatal(err)
+	file, _ := os.Open("offset")
+
+	if file == nil {
+		_, _ = os.Create("offset")
 	}
+
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
