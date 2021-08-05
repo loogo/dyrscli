@@ -162,7 +162,15 @@ func Route() {
 				scaffold.Scaffold()
 			}
 		case "recreate":
-			Recreate()
+			var server string
+			var connect_name string
+
+			f := flag.NewFlagSet("recreate", flag.ExitOnError)
+			f.StringVar(&server, "server", "http://172.16.10.246:8083", "Debezium server address, sample: http://127.0.0.1:8083")
+			f.StringVar(&connect_name, "connect_name", "sample-sink", "Source or Sink name")
+			f.Parse(os.Args[2:])
+
+			Recreate(server, connect_name)
 		}
 	}
 }

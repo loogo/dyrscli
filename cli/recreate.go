@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -9,20 +8,11 @@ import (
 	"strings"
 )
 
-func Recreate() {
-
-	// 1. cmd接收输入参数
-	// param host: Debezium 连接器服务端地址, 示例: http://127.0.0.1:8083
-	// param connect_name : 指定的并且已经存在的连接器Source或Sink名称
-
-	DebeziumServerPtr := flag.String("server", "http://172.16.10.246:8083", "Debezium server address, sample: http://127.0.0.1:8083")
-	DebeziumConnectNamePtr := flag.String("connect_name", "sample-sink", "Source or Sink name")
-
-	flag.Parse()
+func Recreate(server string, connect_name string) {
 
 	// paramters verification
 
-	if *DebeziumConnectNamePtr == "sample-sink" {
+	if connect_name == "sample-sink" {
 		log.Fatalln("请输入一个有效的连接器名称")
 		return
 	}
@@ -32,7 +22,7 @@ func Recreate() {
 	// 2. HTTP GET 获取连接器config
 	log.Println("Get connector...")
 
-	reqOne, err := http.NewRequest(http.MethodGet, *DebeziumServerPtr+"/connectors/" +*DebeziumConnectNamePtr+ "/config", nil)
+	reqOne, err := http.NewRequest(http.MethodGet, server+"/connectors/" +connect_name+ "/config", nil)
 
 	if err != nil {
 		log.Println("获取连接器失败:", err)
@@ -50,7 +40,7 @@ func Recreate() {
 	// 3. HTTP DELETE 删除已经存在的连接器
 	log.Println("Delete connector...")
 
-	reqTwo, err := http.NewRequest(http.MethodDelete, *DebeziumServerPtr+"/connectors/" +*DebeziumConnectNamePtr, nil)
+	reqTwo, err := http.NewRequest(http.MethodDelete, server+"/connectors/" +connect_name, nil)
 
 	if err != nil {
 		log.Println("删除连接器失败:", err)
@@ -65,7 +55,7 @@ func Recreate() {
 
 	bodyThree := strings.NewReader(connectConfigString)
 
-	reqThree, err := http.NewRequest(http.MethodPut, *DebeziumServerPtr+"/connectors/" +*DebeziumConnectNamePtr+ "/config", bodyThree)
+	reqThree, err := http.NewRequest(http.MethodPut, server+"/connectors/" +connect_name+ "/config", bodyThree)
 	reqThree.Header.Set("Content-Type", "application/json")
 
 	if err != nil {
