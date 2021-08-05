@@ -161,6 +161,8 @@ func Route() {
 
 				scaffold.Scaffold()
 			}
+		case "recreate":
+			Recreate()
 		}
 	}
 }
