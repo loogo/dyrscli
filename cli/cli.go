@@ -18,10 +18,12 @@ var topicMap = map[string]string{}
 
 func Route() {
 	// load source partition
-	file, err := os.Open("offset")
-	if err != nil {
-		log.Fatal(err)
+	file, _ := os.Open("offset")
+
+	if file == nil {
+		_, _ = os.Create("offset")
 	}
+
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
@@ -159,6 +161,16 @@ func Route() {
 
 				scaffold.Scaffold()
 			}
+		case "recreate":
+			var server string
+			var connect_name string
+
+			f := flag.NewFlagSet("recreate", flag.ExitOnError)
+			f.StringVar(&server, "server", "http://172.16.10.246:8083", "Debezium server address, sample: http://127.0.0.1:8083")
+			f.StringVar(&connect_name, "connect_name", "sample-sink", "Source or Sink name")
+			f.Parse(os.Args[2:])
+
+			Recreate(server, connect_name)
 		}
 	}
 }
