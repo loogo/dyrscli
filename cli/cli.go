@@ -32,7 +32,7 @@ func Route() {
 		txts := strings.Split(line, " ")
 		var vals []string
 		json.Unmarshal([]byte(txts[1]), &vals)
-		topicMap[vals[0]] = txts[0]
+		topicMap[vals[0]] = getStringInBetween(txts[0], "Partition(", ")")
 		topicMap[vals[0]+"_server"] = getStringInBetween(txts[1], ",", "]")
 	}
 	b, _ := json.MarshalIndent(topicMap, "", "  ")
