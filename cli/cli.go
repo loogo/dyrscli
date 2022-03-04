@@ -32,8 +32,8 @@ func Route() {
 		txts := strings.Split(line, " ")
 		var vals []string
 		json.Unmarshal([]byte(txts[1]), &vals)
-		topicMap[vals[0]] = getStringInBetween(txts[0], "Partition(", ")")
-		topicMap[vals[0]+"_server"] = getStringInBetween(txts[1], ",", "]")
+		topicMap[vals[0]], _ = getStringInBetween(txts[0], "Partition(", ")")
+		topicMap[vals[0]+"_server"], _ = getStringInBetween(txts[1], ",", "]")
 	}
 	b, _ := json.MarshalIndent(topicMap, "", "  ")
 	fmt.Println(string(b))
@@ -87,8 +87,9 @@ func Route() {
 								log.Printf("Connector: %s`s  status is invalid", value.connector)
 								log.Println(value.trace)
 								//Caused by: org.apache.kafka.connect.errors.DataException: Failed to serialize Avro data from topic qtesvc_sdv_product_small_fee_cfg_org_rel :
-								errTopic, found := getStringInBetweenTwoString(value.trace, "Failed to serialize Avro data from topic ", " :")
+								errTopic, found := getAVROTopic(value.trace)
 								if found && errTopic != "" {
+									fmt.Println("found avro topic:" + errTopic)
 									keyScript := fmt.Sprintf("curl -X DELETE http://localhost:8081/subjects/%s-key", errTopic)
 									fmt.Println(keyScript)
 
@@ -174,19 +175,30 @@ func Route() {
 		}
 	}
 }
-func getStringInBetweenTwoString(str string, startS string, endS string) (result string, found bool) {
-	return getStringInBetween(str, startS, endS), true
+
+func getAVROTopic(trace string) (result string, found bool) {
+	errTopic, found := getStringInBetweenTwoString(trace, "Failed to serialize Avro data from topic ", " :")
+	if found {
+		return errTopic, found
+	} else {
+		return getStringInBetweenTwoString(trace, "Failed to access Avro data from topic ", " :")
+	}
 }
-func getStringInBetween(str string, startS string, endS string) (result string) {
+
+func getStringInBetweenTwoString(str string, startS string, endS string) (result string, found bool) {
+	return getStringInBetween(str, startS, endS)
+}
+
+func getStringInBetween(str string, startS string, endS string) (result string, found bool) {
 	s := strings.Index(str, startS)
 	if s == -1 {
-		return result
+		return result, false
 	}
 	newS := str[s+len(startS):]
 	e := strings.Index(newS, endS)
 	if e == -1 {
-		return result
+		return result, false
 	}
 	result = newS[:e]
-	return result
+	return result, true
 }
