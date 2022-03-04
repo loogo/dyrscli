@@ -99,7 +99,8 @@ func Route() {
 									exec.Command("bash", "-c", keyScript).Run()
 									exec.Command("bash", "-c", valueScript).Run()
 								}
-								if strings.Contains(value.trace, "Could not find first log file name in binary log index file") {
+								if strings.Contains(value.trace, "Could not find first log file name in binary log index file") ||
+									strings.Contains(value.trace, "Failed to deserialize data of EventHeaderV4") {
 									if sourcePartition, ok := topicMap[value.connector]; ok {
 										execScript := "echo '[\"" + value.connector + "\"," + topicMap[value.connector+"_server"] + "]|' | kafkacat -P -Z -b localhost:29092 -t my_connect_offsets -K \\| -p " + sourcePartition
 										fmt.Println(execScript)
