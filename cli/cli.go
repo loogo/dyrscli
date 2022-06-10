@@ -84,7 +84,7 @@ func Route() {
 								if value.connectorStatus != "RUNNING" {
 									target = "connector"
 								}
-								log.Printf("Connector: %s`s  status is invalid", value.connector)
+								log.Printf("Connector: %s`s  status is %s", value.connector, value.connectorStatus)
 								log.Println(value.trace)
 								//Caused by: org.apache.kafka.connect.errors.DataException: Failed to serialize Avro data from topic qtesvc_sdv_product_small_fee_cfg_org_rel :
 								errTopic, found := getAVROTopic(value.trace)
@@ -99,9 +99,7 @@ func Route() {
 									exec.Command("bash", "-c", keyScript).Run()
 									exec.Command("bash", "-c", valueScript).Run()
 								}
-								if strings.Contains(value.trace, "Could not find first log file name in binary log index file") ||
-									strings.Contains(value.trace, "Failed to deserialize data of EventHeaderV4") ||
-									strings.Contains(value.trace, "Data row is smaller than a column index, internal schema representation is probably out of sync with real database schema") {
+								if needResetBinlog(value.trace) {
 									if sourcePartition, ok := topicMap[value.connector]; ok {
 										execScript := "echo '[\"" + value.connector + "\"," + topicMap[value.connector+"_server"] + "]|' | kafkacat -P -Z -b localhost:29092 -t my_connect_offsets -K \\| -p " + sourcePartition
 										fmt.Println(execScript)
@@ -176,6 +174,14 @@ func Route() {
 			Recreate(server, connect_name)
 		}
 	}
+}
+
+func needResetBinlog(trace string) bool {
+	return strings.Contains(trace, "Could not find first log file name in binary log index file") ||
+		strings.Contains(trace, "Failed to deserialize data of EventHeaderV4") ||
+		strings.Contains(trace, "io.debezium.DebeziumException: arraycopy: length -1 is negative") ||
+		strings.Contains(trace, "Data row is smaller than a column index, internal schema representation is probably out of sync with real database schema") ||
+		strings.Contains(trace, "Cannot replicate anonymous transaction when AUTO_POSITION = 1")
 }
 
 func getAVROTopic(trace string) (result string, found bool) {
